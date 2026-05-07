@@ -32,4 +32,63 @@
 <img width="1377" height="376" alt="image" src="https://github.com/user-attachments/assets/00d59861-8e66-453e-9f6f-ada23a414e0a" />
 
 
-## 项目结构说明
+## 复现过程
+- 1、加载所有依赖包
+```shell
+### Load libraries -------------------------------------------------------------
+# 数据处理
+library(tidyverse)
+library(here)       # 路径管理
+library(radiant.data)
+library(boot)       # 自助法
+
+# 聚类/倾向性得分
+library(cluster)
+library(twang)      # 多分类倾向性得分
+
+# 绘图
+library(ggplot2)
+library(ggpubr)
+library(gridExtra)
+library(showtext)   # 字体
+
+# 并行计算
+library(doParallel)
+library(foreach)
+
+set.seed(1337) # 固定随机数
+
+- 2、加载并清洗数据
+```shell
+### Load dataset ---------------------------------------------------------------
+combined <- read.csv(here("dat/derived/g_to_c_3_depths.csv")) |>
+  select(-c(xcoord, ycoord)) |>
+  filter(!is.na(TOC_stock_cm))
+
+dat <- combined  |> 
+  filter(history == "G_to_C" & depth_increment == "0-10cm")
+
+- 3、用自然断点法（Jenks）划分转换年限区间
+```shell
+### Generate year intervals-----------------------------------------------------
+n <- 6
+interval_list <- NULL
+
+for (i in 1:n) {
+  groups <- getBreaks(dat$year_change, nclass = 2, method = "jenks") |> 
+    floor()
+  
+  dat <- dat  |> 
+    mutate(history = case_when(
+      between(year_change, groups[2], groups[3]) ~ "newest",
+      between(year_change, groups[1], groups[2]) ~ paste0(groups[1], "-", groups[2])
+    )) |> 
+    filter(history == "newest")
+  
+  if (i < n) {
+    interval_list[i] <- groups[1]
+  } else {
+    interval_list[i] <- groups[2]
+    interval_list[i + 1] <- groups[3]
+  }
+}
