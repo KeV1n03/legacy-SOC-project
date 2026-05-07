@@ -1,7 +1,7 @@
 # legacy-SOC-project
 ## 小组成员
 - 胡凯文2025303110074
-- 高健平2025303110053 
+- 周健平2025303110053 
   
 ## 项目信息
 - 论文标题：《The centennial legacy of land-use change on organic carbon stocks of German agricultural soils.》
