@@ -180,7 +180,7 @@ plot_dat <- left_join(plot_dat, results)
 ```
 
 - 8、绘制图片
-- ```shell
+```shell
   p1 <- plot_dat |> 
   filter(facet == "Grassland") |> 
   ggplot(aes(x = facet, y = mean, fill = depth_increment)) + 
@@ -200,10 +200,11 @@ plot_dat <- left_join(plot_dat, results)
   p3 <- plot_dat |> 
   filter(facet == "Cropland") |> 
   ggplot(...) + geom_col() + ...
-  p4 <- ggarrange(p1, p2, p3, widths = c(0.135, 0.8, 0.09))
-annotate_figure(p4, bottom = "Years since conversion to cropland")
 
-ggsave(
+  p4 <- ggarrange(p1, p2, p3, widths = c(0.135, 0.8, 0.09))
+  annotate_figure(p4, bottom = "Years since conversion to cropland")
+
+  ggsave(
   filename = here("figures/fig_3_grass_crop_luc_intervals_final.tiff"),
   width = 27, height = 18, units = "cm",
   dpi = 300, compression = "lzw"
