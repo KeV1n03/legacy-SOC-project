@@ -95,3 +95,114 @@ for (i in 1:n) {
   }
 }
 ```
+
+- 4、给所有数据打上 “转换年限分组” 标签
+```shell
+### Assign year intervals to all data ------------------------------------------
+conditions <- purrr::map(1:n, function(i) {
+  between(combined$year_change, interval_list[i], interval_list[i + 1]) ~
+    paste0(interval_list[i], "-", interval_list[i + 1])
+})
+
+min_yc <- min(dat$year_change, na.rm = TRUE) - 1
+max_yc <- max(dat$year_change, na.rm = TRUE) + 1
+
+dat <- combined |>
+  mutate(
+    history = case_when(
+      history == "only_C" ~ "Permanent cropland",
+      history == "only_G" ~ "Permanent grassland",
+      !!!conditions
+    )) |> 
+  # 连续年份、左右间距（用于绘图）
+  mutate(years_cont = ..., left = ..., right = ...)
+```
+
+- 5、多分类倾向性得分加权
+```shell
+### Generate PS model ----------------------------------------------------------
+depths <- unique(dat$depth_increment)
+n_cores <- detectCores() - 1
+cl <- makeCluster(n_cores)
+registerDoParallel(cl)
+
+dat_w <- foreach(i = seq_along(depths), .combine = rbind) %dopar% {
+  subset_df <- dat[dat$depth_increment == depths[i], ]
+  
+  # 多分类倾向性得分
+  mnps_mod <- mnps(
+    history ~ clay + gw_depth + cn_ratio,  # 协变量
+    data = subset_df, 
+    estimand = "ATE",
+    stop.method = "ks.mean",
+    n.trees = 1000
+  )
+  
+  subset_df$w <- get.weights(mnps_mod)
+  subset_df
+}
+stopCluster(cl)
+```
+
+- 6、计算加权均值 + 样本量
+```shell
+### Summary data ---------------------------------------------------------------
+plot_dat <- dat_w |> 
+  group_by(years_cont, depth_increment) |>
+  summarise(
+    n = n_distinct(PointID),
+    mean = weighted.mean(TOC_stock_cm, w = w),
+    ci = weighted.sd(TOC_stock_cm, w = w)/sqrt(n)
+  )
+```
+
+- 7、Bootstrap 10000 次计算置信区间
+```shell
+### Bootstrap CI determination -------------------------------------------------
+mean.fun <- function(data, idx) {
+  dat <- data[idx, ]
+  weighted.mean(dat$TOC_stock_cm, w = dat$w)
+}
+
+# 并行Bootstrap
+cl <- makeCluster(n_cores)
+registerDoParallel(cl)
+
+results <- foreach(i = seq_along(inter), .combine = rbind) %:%
+  foreach(j = seq_along(depths), .combine = rbind) %dopar% {
+    subset_df <- ...
+    ci <- boot.ci(boot(subset_df, mean.fun, R = 10000), type = "norm")$normal
+    data.frame(years_cont, depth_increment, ci_lower, ci_upper)
+  }
+stopCluster(cl)
+
+plot_dat <- left_join(plot_dat, results)
+```
+
+- 8、绘制图片
+- ```shell
+  p1 <- plot_dat |> 
+  filter(facet == "Grassland") |> 
+  ggplot(aes(x = facet, y = mean, fill = depth_increment)) + 
+  geom_col(position = position_dodge(0.3), width = 2.5) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
+  geom_hline(yintercept = 农田均值, linetype = "dashed") +
+  theme_minimal() + ...
+  p2 <- plot_dat |>
+  filter(facet == "Transitional") |> 
+  ggplot(aes(x = years_cont, y = mean, fill = depth_increment)) + 
+  geom_rect(aes(xmin = new_left, xmax = new_right, ymin = 0, ymax = mean)) +
+  geom_errorbar(...) +
+  geom_hline(...) +
+  scale_x_continuous(breaks = x_scale, labels = x_labels)
+  p3 <- plot_dat |> 
+  filter(facet == "Cropland") |> 
+  ggplot(...) + geom_col() + ...
+  p4 <- ggarrange(p1, p2, p3, widths = c(0.135, 0.8, 0.09))
+annotate_figure(p4, bottom = "Years since conversion to cropland")
+ggsave(
+  filename = here("figures/fig_3_grass_crop_luc_intervals_final.tiff"),
+  width = 27, height = 18, units = "cm",
+  dpi = 300, compression = "lzw"
+)
+```
