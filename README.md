@@ -188,6 +188,7 @@ plot_dat <- left_join(plot_dat, results)
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
   geom_hline(yintercept = 农田均值, linetype = "dashed") +
   theme_minimal() + ...
+  
   p2 <- plot_dat |>
   filter(facet == "Transitional") |> 
   ggplot(aes(x = years_cont, y = mean, fill = depth_increment)) + 
@@ -195,11 +196,13 @@ plot_dat <- left_join(plot_dat, results)
   geom_errorbar(...) +
   geom_hline(...) +
   scale_x_continuous(breaks = x_scale, labels = x_labels)
+  
   p3 <- plot_dat |> 
   filter(facet == "Cropland") |> 
   ggplot(...) + geom_col() + ...
   p4 <- ggarrange(p1, p2, p3, widths = c(0.135, 0.8, 0.09))
 annotate_figure(p4, bottom = "Years since conversion to cropland")
+
 ggsave(
   filename = here("figures/fig_3_grass_crop_luc_intervals_final.tiff"),
   width = 27, height = 18, units = "cm",
