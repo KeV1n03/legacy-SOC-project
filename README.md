@@ -1,6 +1,6 @@
 # legacy-SOC-project
 ## 小组成员
-- 胡凯文2025303110074  
+- 胡凯文2025303110074
 - 高健平2025303110053 
   
 ## 项目信息
@@ -8,12 +8,13 @@
 - 发表期刊：Global Change Biology（2024）
 - DOI：https://doi.org/10.1111/gcb.17444
 - 原始数据与代码：https://github.com/dsemde/LUC-legacy-SOC
-- 
+  
 ## 复现目标
 **对于文中的所有图片进行复现**
 
 ## 复现结果
-- 小组成员根据作者所提供的数据代码并且结合课堂所学知识，对文献中的两张图片进行了复现
+- 小组成员根据作者所提供的数据代码并且结合课堂所学知识，对文献中的两张图片进行了复现。
+  
 **原文图片**
 <img width="1154" height="856" alt="image" src="https://github.com/user-attachments/assets/ac0789b0-25e9-4909-a459-17a2b09e0990" />
 
