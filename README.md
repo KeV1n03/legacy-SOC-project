@@ -57,6 +57,7 @@ library(doParallel)
 library(foreach)
 
 set.seed(1337) # 固定随机数
+```
 
 - 2、加载并清洗数据
 ```shell
@@ -67,6 +68,7 @@ combined <- read.csv(here("dat/derived/g_to_c_3_depths.csv")) |>
 
 dat <- combined  |> 
   filter(history == "G_to_C" & depth_increment == "0-10cm")
+```
 
 - 3、用自然断点法（Jenks）划分转换年限区间
 ```shell
@@ -92,3 +94,4 @@ for (i in 1:n) {
     interval_list[i + 1] <- groups[3]
   }
 }
+```
